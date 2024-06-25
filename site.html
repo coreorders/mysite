@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자주쓰는 링크</title>
+    <style>
+        body {
+            background-color: #ffd700;
+            font-family: Arial, sans-serif;
+            font-size: 1em; /* 글씨 크기 원래대로 */
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px; /* 그리드 사이의 간격 */
+            padding: 20px;
+        }
+        .container div {
+            display: flex;
+            align-items: center;
+            position: relative;
+            border-radius: 5px;
+            background-color: transparent; /* 배경색 투명 */
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        .button {
+            background-color: white;
+            border: none;
+            text-align: center;
+            text-decoration: none;
+            color: black;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            padding: 10px;
+            flex-grow: 1;
+        }
+        .button:hover {
+            background-color: #f0f0f0;
+        }
+        .counter {
+            background-color: #fff;
+            border: 1px solid #000;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .delete-button, .reset-button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 10px; /* 버튼 크기를 더 작게 설정 */
+            position: absolute;
+        }
+        .delete-button {
+            color: red;
+            top: 5px;
+            right: 5px;
+        }
+        .reset-button {
+            color: blue;
+            bottom: 5px;
+            right: 5px;
+        }
+        .add-site-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .add-site-form input {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 22px);
+        }
+        .add-site-form button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .add-site-form button:hover {
+            background-color: #45a049;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="link-container"></div>
+
+    <button class="toggle-form-button" onclick="toggleForm()">사이트 추가</button>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="add-site-form" id="add-site-form">
+        <input type="text" id="site-name" placeholder="사이트명">
+        <input type="text" id="site-url" placeholder="URL" onkeypress="handleKeyPress(event)">
+        <button onclick="addSite()">추가</button>
+        <button onclick="toggleForm()" style="background-color: red; margin-top: 10px;">취소</button>
+    </div>
+
+    <script>
+        // 클릭 카운트를 저장할 배열
+        let links = JSON.parse(localStorage.getItem('links')) || [];
+
+        // 페이지 로드 시 로컬 스토리지에서 링크 불러오기
+        document.addEventListener('DOMContentLoaded', () => {
+            links.forEach((link, index) => {
+                createLinkElement(link, index);
+            });
+        });
+
+        // 링크 요소를 생성하는 함수
+        function createLinkElement(link, index) {
+            const container = document.getElementById('link-container');
+            const newDiv = document.createElement('div');
+            newDiv.innerHTML = `
+                <a class="button" href="${link.url}" target="_blank" onclick="incrementCounter(${index})">${link.name}</a>
+                <button class="delete-button" onclick="confirmDelete(${index})">&#10006;</button>
+                <button class="reset-button" onclick="resetCounter(${index})">&#10227;</button>
+                <span class="counter" id="counter-${index}">${link.counter}</span>
+            `;
+            container.appendChild(newDiv);
+        }
+
+        // 클릭 시 카운터를 증가시키는 함수
+        function incrementCounter(index) {
+            links[index].counter++;
+            document.getElementById('counter-' + index).textContent = links[index].counter;
+            localStorage.setItem('links', JSON.stringify(links));
+        }
+
+        // 사이트 삭제 함수
+        function deleteSite(index) {
+            links.splice(index, 1);
+            localStorage.setItem('links', JSON.stringify(links));
+            location.reload();
+        }
+
+        // 사이트 삭제 확인 함수
+        function confirmDelete(index) {
+            if (confirm("정말 삭제하시겠습니까?")) {
+                deleteSite(index);
+            }
+        }
+
+        // 카운터 초기화 함수
+        function resetCounter(index) {
+            links[index].counter = 0;
+            document.getElementById('counter-' + index).textContent = links[index].counter;
+            localStorage.setItem('links', JSON.stringify(links));
+        }
+
+        // 사이트 추가 폼 토글 함수
+        function toggleForm() {
+            const form = document.getElementById('add-site-form');
+            const overlay = document.getElementById('overlay');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                overlay.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+                overlay.style.display = 'none';
+            }
+        }
+
+        // 새로운 사이트 추가 함수
+        function addSite() {
+            const siteName = document.getElementById('site-name').value;
+            let siteUrl = document.getElementById('site-url').value;
+            if (siteName && siteUrl) {
+                // URL에 https://가 없을 경우 추가
+                if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) {
+                    siteUrl = 'https://' + siteUrl;
+                }
+
+                const newLink = { name: siteName, url: siteUrl, counter: 0 };
+                links.push(newLink);
+                localStorage.setItem('links', JSON.stringify(links));
+
+                createLinkElement(newLink, links.length - 1);
+
+                // 입력 필드 초기화
+                document.getElementById('site-name').value = '';
+                document.getElementById('site-url').value = '';
+                toggleForm(); // 폼과 오버레이 숨기기
+            } else {
+                alert("사이트명과 URL을 모두 입력해주세요.");
+            }
+        }
+
+        // URL 입력 필드에서 엔터 키를 눌렀을 때 사이트 추가
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                addSite();
+            }
+        }
+    </script>
+</body>
+</html>
